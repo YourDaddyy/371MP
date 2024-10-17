@@ -6,7 +6,7 @@ import multiprocessing
 
 
 # Function to handle client requests
-def handle_client(client_socket):
+def handle_client(client_socket,is_chunk=False):
     try:
         request = client_socket.recv(1024).decode('utf-8')
         print(f"Received Request:\n{request}")
@@ -43,9 +43,28 @@ def handle_client(client_socket):
 
                 with open(path, 'r') as file:
                     body = file.read()
+                if is_chunk == True:
+                    response_headers = (
+                    f"HTTP/1.1 200 OK\r\n"
+                    f"Content-Type: text/html\r\n"
+                    f"Last-Modified: {last_modified_str}\r\n"
+                    f"Content-Length: {len(body)}\r\n"
+                    f"Transfer-Encoding: chunked\r\n\r\n"
+                    )
+                    client_socket.sendall(response_headers.encode())
 
-                response = f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nLast-Modified: {last_modified_str}\r\nContent-Length: {len(body)}\r\n\r\n{body}"
-                client_socket.sendall(response.encode())
+                    with open(path, 'rb') as file:
+                        while chunk := file.read(512):  
+                            client_socket.sendall(f"{len(chunk):X}\r\n".encode())
+                            print(f"Message is sent chunk size is {len(chunk)}")
+                            client_socket.sendall(chunk)
+                            client_socket.sendall(b"\r\n")
+
+                    client_socket.sendall(b"0\r\n\r\n")
+                    print("\n\n\n")
+                else:
+                    response = f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nLast-Modified: {last_modified_str}\r\nContent-Length: {len(body)}\r\n\r\n{body}"
+                    client_socket.sendall(response.encode())
             else:
                 response = "HTTP/1.1 404 Not Found\r\n\r\n"
                 client_socket.sendall(response.encode())
@@ -150,7 +169,7 @@ def handle_proxy_client(client_socket):
             print(f"Error closing client socket: {e}")
 
 
-def start_server(host='localhost', port=8080):
+def start_server(host='localhost', port=8080, is_chunck = False):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind((host, port))
@@ -160,7 +179,7 @@ def start_server(host='localhost', port=8080):
     while True:
         client_socket, addr = server.accept()
         print(f"[*] Accepted connection from {addr}")
-        threading.Thread(target=handle_client, args=(client_socket,)).start()
+        threading.Thread(target=handle_client, args=(client_socket, is_chunck)).start()
         
 def start_proxy_server(host='localhost', port=8080):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -175,7 +194,8 @@ def start_proxy_server(host='localhost', port=8080):
         threading.Thread(target=handle_proxy_client, args=(client_socket,)).start()
 
 if __name__ == "__main__":
-    server_process = multiprocessing.Process(target=start_server, args=('localhost', 8080))
+    is_chunck = False
+    server_process = multiprocessing.Process(target=start_server, args=('localhost', 8080, is_chunck))
     proxy_process = multiprocessing.Process(target=start_proxy_server, args=('localhost', 8081))
     
     server_process.start()
