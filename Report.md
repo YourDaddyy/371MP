@@ -145,3 +145,16 @@ A web server directly serves its own files or resources to a client, while a pro
   * It is worth to say that the first `200 ok` comes from proxy server and the second `200 ok` comes form target server. Both of them is necessary.![-i google](./src/8.png)
 
 ### Multi-thread
+
+* Pro :
+  * Thread Creation for Each Client
+  * Requesting simultaneously
+
+* Improvement:
+  * Increased Throughput
+  * Multiple clients
+  * Reduced Latency
+* Test Procedure
+  * Using `ab` (Apache Benchmark)
+    * `ab -n 100 -c 5 http://localhost:8080/test.html`
+    * ![multi](./src/9.png)
