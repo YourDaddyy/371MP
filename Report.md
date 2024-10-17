@@ -114,3 +114,34 @@ Host: localhost
 ### 501 Response:
 
 ![501](./src/5.png)
+
+
+
+## Step 3
+
+A web server directly serves its own files or resources to a client, while a proxy server acts as an intermediary between the client and another server. It relays the client’s request to the target server and returns the response.
+
+### Detailed Specifications
+
+* Listening for Client Requests
+* Parsing the Request
+* Forwarding Requests
+* Handling HTTPS Requests (`https` via CONNECT)
+* Error Handling
+* Connection Lifecycle and Concurrency
+  * Implement a timeout mechanism and a decision mechanism that allows the application to either wait for a response or close the connection.
+  * Handle multiple client connections
+
+### Test Procedure
+
+* Visit http with `GET`:
+  * `curl -x localhost:8081 http://127.0.0.1:3000/test.html  `
+  * Receive the html file![-x html](./src/7.png)
+* Visit https with `CONNECT`:
+  * `curl -x localhost:8081 https://www.google.com `
+  * Receive the html file![-x google](./src/6.png)
+* See more information:
+  * `curl -i -x localhost:8081 http://127.0.0.1:3000/test.html  `
+  * It is worth to say that the first `200 ok` comes from proxy server and the second `200 ok` comes form target server. Both of them is necessary.![-i google](./src/8.png)
+
+### Multi-thread
