@@ -133,6 +133,25 @@ def handle_proxy_client(client_socket):
             target_socket.close()
 
         else:
+            request_line = lines[0]
+            if request_line.startswith("GET"):
+                method, full_url, version = request_line.split()
+
+                if full_url.startswith("http://"):
+                    full_url = full_url[len("http://"):]
+                elif full_url.startswith("https://"):
+                    full_url = full_url[len("https://"):]
+
+                if "/" in full_url:
+                    path = full_url[full_url.index("/"):]
+                else:
+                    path = "/"
+
+                new_request_line = f"{method} {path} {version}"
+                lines[0] = new_request_line
+
+                request = "\r\n".join(lines) + "\r\n\r\n"
+            
             host = None
             for line in lines:
                 if line.startswith("Host:"):
