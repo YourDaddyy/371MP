@@ -176,7 +176,7 @@ def handle_proxy_client(client_socket):
 
             target_host, target_port = host.split(":")
             target_port = int(target_port)
-            print(f"Host is {target_host}, Port is {target_port}")
+            # print(f"Host is {target_host}, Port is {target_port}")
             target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             target_socket.connect((target_host, target_port))
             target_socket.sendall(request.encode())
