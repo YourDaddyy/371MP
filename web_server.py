@@ -16,6 +16,16 @@ def handle_client(client_socket,is_chunk=False):
 
         request_line = request.splitlines()[0]
         method, path, _ = request_line.split()
+        
+        if request_line.startswith("GET"):
+            if path.startswith("http://"):
+                path = path[len("http://"):]
+            elif path.startswith("https://"):
+                path = path[len("https://"):]
+            if "/" in path:
+                path = path[path.index("/"):]
+            else:
+                path = "/"
 
         if path == "/":
             path = "test.html"
