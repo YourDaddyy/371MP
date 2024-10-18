@@ -61,7 +61,7 @@ If-Modified-Since: Wed, 16 Oct 2024 07:28:00 GMT
 
 ```http
 GET /test.html HTTP/1.1
-Host: localhost
+HO
 ```
 
  
