@@ -31,9 +31,7 @@ Host: localhost
 
 ```http
 GET /test.html HTTP/1.1
-
 Host: localhost
-
 If-Modified-Since: Wed, 16 Oct 2024 07:28:00 GMT
 ```
 
@@ -63,8 +61,7 @@ If-Modified-Since: Wed, 16 Oct 2024 07:28:00 GMT
 
 ```http
 GET /test.html HTTP/1.1
-
-Host localhost
+Host: localhost
 ```
 
  
@@ -160,7 +157,7 @@ A web server directly serves its own files or resources to a client, while a pro
   * Receive the html file![-x google](./src/6.png)
   
 * See more information:
-  * `curl -i -x localhost:8081 http://127.0.0.1:3000/test.html  `
+  * `curl -i -x localhost:8081 https://www.google.com`
   * It is worth to say that the first `200 ok` comes from proxy server and the second `200 ok` comes form target server. Both of them is necessary.![-i google](./src/8.png)
 
 ### Multi-thread
