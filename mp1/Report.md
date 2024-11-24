@@ -106,23 +106,23 @@ Host: localhost
 
 ### 200 Response:
 
-![200](./src/1.png)
+![200](src.png)
 
 ### 304 Response:
 
-![304](./src/2.png)
+![304](src.png)
 
 ### 400 Response:
 
-![400](./src/3.png)
+![400](src.png)
 
 ### 404 Response:
 
-![404](./src/4.png)
+![404](src.png)
 
 ### 501 Response:
 
-![501](./src/5.png)
+![501](src.png)
 
 
 
@@ -147,18 +147,18 @@ A web server directly serves its own files or resources to a client, while a pro
 
 * Visit http with `GET`:
   * `curl -x localhost:8081 http://127.0.0.1:3000/test.html  `
-  * Receive the html file![-x html](./src/7.png)
+  * Receive the html file![-x html](src.png)
   
   
   
 * Visit https with `CONNECT`:
   
   * `curl -x localhost:8081 https://www.google.com `
-  * Receive the html file![-x google](./src/6.png)
+  * Receive the html file![-x google](src.png)
   
 * See more information:
   * `curl -i -x localhost:8081 https://www.google.com`
-  * It is worth to say that the first `200 ok` comes from proxy server and the second `200 ok` comes form target server. Both of them is necessary.![-i google](./src/8.png)
+  * It is worth to say that the first `200 ok` comes from proxy server and the second `200 ok` comes form target server. Both of them is necessary.![-i google](src.png)
 
 ### Multi-thread
 
@@ -173,7 +173,7 @@ A web server directly serves its own files or resources to a client, while a pro
 * Test Procedure
   * Using `ab` (Apache Benchmark)
     * `ab -n 100 -c 5 http://localhost:8080/test.html`
-    * Result:![multi](./src/9.png)
+    * Result:![multi](src.png)
 
 ## Part 4
 
@@ -181,7 +181,7 @@ We’ve made changes to our web server to send data in chunks instead of in a si
 
 * We set chunk_size as 512 and add `Transfer-Encoding: chunked` into our `response_headers`
 
-  ![chunk](./src/10.png)
+  ![chunk](src0.png)
 
 * The decision to implement this feature on the web server side is due to the server's role in sending data.
 
