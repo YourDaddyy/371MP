@@ -3,12 +3,12 @@ import socket
 # Constants
 BUFFER_SIZE = 1024
 RECEIVER_ADDRESS = ("localhost", 12345)  # Receiver address
-receiver_window = 5  # Flow control: buffer size
+RECEIVER_WINDOW = 5  # Flow control: number of packets the receiver can buffer at once
 
 # Reliable Data Transfer - Receiver
 def rdt_receive(receiver_socket):
     expected_sequence_number = 0
-    receiver_buffer = []  # Simulate a buffer
+    receiver_buffer = []  # Simulate a buffer to hold incoming data packets
 
     while True:
         packet, sender_address = receiver_socket.recvfrom(BUFFER_SIZE)
@@ -17,10 +17,17 @@ def rdt_receive(receiver_socket):
             sequence_number = int(sequence_number)
 
             if sequence_number == expected_sequence_number:
-                print(f"Received packet: {sequence_number}")
-                receiver_buffer.append(data)
-                receiver_socket.sendto(f"ACK:{sequence_number}".encode(), sender_address)
-                expected_sequence_number += 1
+                # Add data to buffer if the receiver window allows
+                if len(receiver_buffer) < RECEIVER_WINDOW:
+                    print(f"Received packet: {sequence_number}")
+                    receiver_buffer.append(data)
+                    # Only send ACK if buffer has room
+                    receiver_socket.sendto(f"ACK:{sequence_number}".encode(), sender_address)
+                    expected_sequence_number += 1
+                else:
+                    # If the window is full, we cannot accept more packets yet
+                    print(f"Receiver window full, waiting to process packet {sequence_number}...")
+                    continue
             else:
                 # Send ACK for the last correctly received packet
                 ack_to_send = expected_sequence_number - 1
