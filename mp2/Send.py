@@ -11,8 +11,6 @@ RECEIVER_ADDRESS = ("localhost", 12345)
 
 # Sender and Receiver Sockets
 sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-receiver_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-receiver_socket.bind(("localhost", 12345))
 
 # Sequence Number Tracking
 next_sequence_number = 0
@@ -21,29 +19,8 @@ acknowledged = set()
 # Congestion Control Parameters
 cwnd = 1
 ssthresh = 16
-receiver_window = 5
 
-# Connection Setup
 
-# def connection_setup():
-#     print("Setting up connection...")
-#     sender_socket.sendto(b"SYN", ("localhost", 12345))
-#     data, _ = receiver_socket.recvfrom(BUFFER_SIZE)
-#     if data == b"SYN-ACK":
-#         sender_socket.sendto(b"ACK", ("localhost", 12345))
-#     print("Connection established.")
-
-# # Connection Teardown
-
-# def connection_teardown():
-#     print("Tearing down connection...")
-#     sender_socket.sendto(b"FIN", ("localhost", 12345))
-#     data, _ = receiver_socket.recvfrom(BUFFER_SIZE)
-#     if data == b"FIN-ACK":
-#         sender_socket.sendto(b"ACK", ("localhost", 12345))
-#     print("Connection closed.")
-
-# Reliable Data Transfer - Sender
 
 def rdt_send(data):
     global next_sequence_number, cwnd, ssthresh
@@ -101,53 +78,6 @@ def rdt_send(data):
             #         sender_socket.sendto(packet, ("localhost", 12345))
             #         print(f"Sender: Retransmitted packet: {i}")
 
-# Reliable Data Transfer - Receiver
-
-def rdt_receive():
-    expected_sequence_number = 0
-    receiver_buffer = []  # Simulate a buffer to hold incoming data packets
-    while True:
-        packet, address = receiver_socket.recvfrom(BUFFER_SIZE)
-        if ":" in packet.decode():
-            sequence_number, data = packet.decode().split(":", 1)
-            sequence_number = int(sequence_number)
-
-            if sequence_number == expected_sequence_number:
-                # Add data to buffer if the receiver window allows
-                if len(receiver_buffer) < receiver_window:
-                    print(f"Receiver: Received packet: {sequence_number}")
-                    receiver_buffer.append(data)
-                    receiver_socket.sendto(f"ACK:{sequence_number}".encode(), address)
-                    expected_sequence_number += 1
-                else:
-                    # If the window is full, we cannot accept more packets yet
-                    print(f"Receiver: Window full, waiting to process packet {sequence_number}...")
-                    continue
-            else:
-                # Send ACK for the last correctly received packet
-                ack_to_send = expected_sequence_number - 1
-                receiver_socket.sendto(f"ACK:{ack_to_send}".encode(), address)
-
-        elif packet == b"FIN":
-            print("Receiver: connection teardown initiated by sender.")
-            receiver_socket.sendto(b"FIN-ACK", address)
-            print("Receiver: connection closed.")
-            break
-
-# Start receiver to keep listening
-def start_receive():
-    print("Receiver: Waiting for connection...")
-    while True:  # Keep listening for connection setup and data
-        data, sender_address = receiver_socket.recvfrom(BUFFER_SIZE)
-        if data == b"SYN":
-            print("Receiver: Received SYN, sending SYN-ACK...")
-            receiver_socket.sendto(b"SYN-ACK", sender_address)
-            data, _ = receiver_socket.recvfrom(BUFFER_SIZE)
-            if data == b"ACK":
-                print("Receiver: Connection established.")
-                rdt_receive()
-
-# Sender logic to establish the connection and send data
 def start_send():
     print("Sender: Setting up connection. Sending SYN")
     sender_socket.sendto(b"SYN", RECEIVER_ADDRESS)
@@ -156,10 +86,9 @@ def start_send():
         sender_socket.sendto(b"ACK", RECEIVER_ADDRESS)
         print("Sender: Connection established. Send ACK")
 
-    # Send Data
+
     rdt_send(b"Hello, this is a test message for the reliable transfer protocol.")
 
-    # Connection Teardown
     print("Sender: Tearing down connection...")
     sender_socket.sendto(b"FIN", RECEIVER_ADDRESS)
     data, _ = sender_socket.recvfrom(BUFFER_SIZE)
@@ -167,11 +96,5 @@ def start_send():
         sender_socket.sendto(b"ACK", RECEIVER_ADDRESS)
         print("Sender: Connection closed.")
 
-# Start Receiver Thread
-receiver_thread = threading.Thread(target=start_receive)
-receiver_thread.daemon = True
-receiver_thread.start()
-
-# Example Usage
 if __name__ == "__main__":
     start_send()
