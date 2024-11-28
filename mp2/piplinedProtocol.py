@@ -6,7 +6,7 @@ import time
 # Constants
 BUFFER_SIZE = 1024
 TIMEOUT_INTERVAL = 2  # Timeout interval in seconds
-LOSS_PROBABILITY = 0.1  # Probability of packet loss
+LOSS_PROBABILITY = 0.9  # Probability of packet loss
 RECEIVER_ADDRESS = ("localhost", 12345)
 
 # Sender and Receiver Sockets
@@ -54,16 +54,26 @@ def rdt_send(data):
 
     while window_base < len(packets):
         # Send packets in the window
+        # for i in range(window_base, min(window_base + cwnd, len(packets))):
+        #     if i not in acknowledged:
+        #         # Simulate packet loss
+        #         if random.random() > LOSS_PROBABILITY:
+        #             packet = f"{next_sequence_number}:{packets[i].decode(errors='ignore')}".encode()
+        #             sender_socket.sendto(packet, ("localhost", 12345))
+        #             print(f"Sender: Sent packet: {next_sequence_number}")
+        #         else:
+        #             print(f"Sender: Packet {next_sequence_number} lost")
+        #         next_sequence_number += 1
+        
         for i in range(window_base, min(window_base + cwnd, len(packets))):
             if i not in acknowledged:
                 # Simulate packet loss
                 if random.random() > LOSS_PROBABILITY:
-                    packet = f"{next_sequence_number}:{packets[i].decode(errors='ignore')}".encode()
+                    packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
                     sender_socket.sendto(packet, ("localhost", 12345))
-                    print(f"Sender: Sent packet: {next_sequence_number}")
+                    print(f"Sender: Sent packet: {i}")
                 else:
-                    print(f"Sender: Packet {next_sequence_number} lost")
-                next_sequence_number += 1
+                    print(f"Sender: Packet {i} lost")
 
         # Wait for ACKs
         try:
@@ -85,11 +95,11 @@ def rdt_send(data):
             print("Sender: Timeout occurred, retransmitting...")
             ssthresh = max(cwnd // 2, 1)
             cwnd = 1  # Reset to slow start
-            for i in range(window_base, min(window_base + cwnd, len(packets))):
-                if i not in acknowledged:
-                    packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
-                    sender_socket.sendto(packet, ("localhost", 12345))
-                    print(f"Sender: Retransmitted packet: {i}")
+            # for i in range(window_base, min(window_base + cwnd, len(packets))):
+            #     if i not in acknowledged:
+            #         packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
+            #         sender_socket.sendto(packet, ("localhost", 12345))
+            #         print(f"Sender: Retransmitted packet: {i}")
 
 # Reliable Data Transfer - Receiver
 
