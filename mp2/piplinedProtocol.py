@@ -10,7 +10,6 @@ LOSS_PROBABILITY = 0.5  # Probability of packet loss
 RECEIVER_ADDRESS = ("localhost", 12345)
 
 # Sender and Receiver Sockets
-sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receiver_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 receiver_socket.bind(("localhost", 12345))
 
@@ -45,7 +44,7 @@ receiver_window = 5
 
 # Reliable Data Transfer - Sender
 
-def rdt_send(data):
+def rdt_send(data,sender_socket):
     global next_sequence_number, cwnd, ssthresh
 
     # Split data into packets
@@ -149,6 +148,7 @@ def start_receive():
 
 # Sender logic to establish the connection and send data
 def start_send():
+    sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print("Sender: Setting up connection. Sending SYN")
     sender_socket.sendto(b"SYN", RECEIVER_ADDRESS)
     data, _ = sender_socket.recvfrom(BUFFER_SIZE)
@@ -157,7 +157,7 @@ def start_send():
         print("Sender: Connection established. Send ACK")
 
     # Send Data
-    rdt_send(b"Hello, this is a test message for the reliable transfer protocol.")
+    rdt_send(b"Hello, this is a test message for the reliable transfer protocol.",sender_socket)
 
     # Connection Teardown
     print("Sender: Tearing down connection...")

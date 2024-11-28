@@ -9,8 +9,6 @@ TIMEOUT_INTERVAL = 2  # Timeout interval in seconds
 LOSS_PROBABILITY = 0.5  # Probability of packet loss
 RECEIVER_ADDRESS = ("localhost", 12345)
 
-# Sender and Receiver Sockets
-sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # Sequence Number Tracking
 next_sequence_number = 0
@@ -22,7 +20,7 @@ ssthresh = 16
 
 
 
-def rdt_send(data):
+def rdt_send(data, sender_socket):
     global next_sequence_number, cwnd, ssthresh
 
     # Split data into packets
@@ -79,6 +77,7 @@ def rdt_send(data):
             #         print(f"Sender: Retransmitted packet: {i}")
 
 def start_send():
+    sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     print("Sender: Setting up connection. Sending SYN")
     sender_socket.sendto(b"SYN", RECEIVER_ADDRESS)
     data, _ = sender_socket.recvfrom(BUFFER_SIZE)
@@ -87,7 +86,7 @@ def start_send():
         print("Sender: Connection established. Send ACK")
 
 
-    rdt_send(b"Hello, this is a test message for the reliable transfer protocol.")
+    rdt_send(b"Hello, this is a test message for the reliable transfer protocol.", sender_socket)
 
     print("Sender: Tearing down connection...")
     sender_socket.sendto(b"FIN", RECEIVER_ADDRESS)
