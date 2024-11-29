@@ -18,6 +18,16 @@ acknowledged = set()
 cwnd = 1
 ssthresh = 16
 
+def send_packet(i, packet_data, sender_socket):
+    global next_sequence_number
+    if i not in acknowledged:
+        # Simulate packet loss
+        if random.random() > LOSS_PROBABILITY:
+            packet = f"{i}:{packet_data.decode(errors='ignore')}".encode()
+            sender_socket.sendto(packet, RECEIVER_ADDRESS)
+            print(f"Sender: Sent packet: {i}")
+        else:
+            print(f"Sender: Packet {i} lost")
 
 
 def rdt_send(data, sender_socket):
@@ -40,15 +50,19 @@ def rdt_send(data, sender_socket):
         #             print(f"Sender: Packet {next_sequence_number} lost")
         #         next_sequence_number += 1
         
+        threads = []
+        
+        # Send packets in parallel within the window
         for i in range(window_base, min(window_base + cwnd, len(packets))):
             if i not in acknowledged:
-                # Simulate packet loss
-                if random.random() > LOSS_PROBABILITY:
-                    packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
-                    sender_socket.sendto(packet, ("localhost", 12345))
-                    print(f"Sender: Sent packet: {i}")
-                else:
-                    print(f"Sender: Packet {i} lost")
+                # Create a new thread to send the packet
+                thread = threading.Thread(target=send_packet, args=(i, packets[i], sender_socket))
+                threads.append(thread)
+                thread.start()
+
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join()
 
         # Wait for ACKs
         try:
