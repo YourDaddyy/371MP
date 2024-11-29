@@ -104,6 +104,13 @@ def rdt_send(data, sender_socket):
         #     #         packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
         #     #         sender_socket.sendto(packet, ("localhost", 12345))
         #     #         print(f"Sender: Retransmitted packet: {i}")
+        
+        # Update congestion control parameters
+        if cwnd < ssthresh:
+            cwnd *= 2  # Exponential growth during slow start
+        else:
+            cwnd += 1  # Linear growth during congestion avoidance
+            
         start_time = time.time()
         received_acks = set()
         print()
@@ -127,12 +134,7 @@ def rdt_send(data, sender_socket):
         for ack_num in received_acks:
             acknowledged.add(ack_num)
             window_base = ack_num + 1
-
-        # Update congestion control parameters
-        if cwnd < ssthresh:
-            cwnd *= 2  # Exponential growth during slow start
-        else:
-            cwnd += 1  # Linear growth during congestion avoidance
+            
 
         # Check if there are still unacknowledged packets
         if window_base >= len(packets):
