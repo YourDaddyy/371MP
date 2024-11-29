@@ -6,7 +6,7 @@ import time
 # Constants
 BUFFER_SIZE = 1024
 TIMEOUT_INTERVAL = 2  # Timeout interval in seconds
-LOSS_PROBABILITY = 0.35  # Probability of packet loss
+LOSS_PROBABILITY = 0.2  # Probability of packet loss
 RECEIVER_ADDRESS = ("localhost", 12345)
 
 
@@ -50,49 +50,94 @@ def rdt_send(data, sender_socket):
         #             print(f"Sender: Packet {next_sequence_number} lost")
         #         next_sequence_number += 1
         
-        threads = []
+        # threads = []
         
-        # Send packets in parallel within the window
+        # # Send packets in parallel within the window
+        # for i in range(window_base, min(window_base + cwnd, len(packets))):
+        #     if i not in acknowledged:
+        #         # Create a new thread to send the packet
+        #         thread = threading.Thread(target=send_packet, args=(i, packets[i], sender_socket))
+        #         threads.append(thread)
+        #         thread.start()
+
+        # # Wait for all threads to complete
+        # for thread in threads:
+        #     thread.join()
+        num_sent_packets = 0
         for i in range(window_base, min(window_base + cwnd, len(packets))):
             if i not in acknowledged:
-                # Create a new thread to send the packet
-                thread = threading.Thread(target=send_packet, args=(i, packets[i], sender_socket))
-                threads.append(thread)
-                thread.start()
-
-        # Wait for all threads to complete
-        for thread in threads:
-            thread.join()
+                num_sent_packets += 1
+                # Simulate packet loss
+                if random.random() > LOSS_PROBABILITY:
+                    packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
+                    sender_socket.sendto(packet, ("localhost", 12345))
+                    print(f"Sender: Sent packet: {i}")
+                else:
+                    print(f"Sender: Packet {i} lost")
 
         # Wait for ACKs
-        try:
-            sender_socket.settimeout(TIMEOUT_INTERVAL)
-            ack, _ = sender_socket.recvfrom(BUFFER_SIZE)
-            if ":" in ack.decode():
-                ack_num = int(ack.decode().split(":")[1])
-                print()
-                print(f"Sender: Received ACK: {ack_num}")
-                print()
-                acknowledged.add(ack_num)
-                window_base = ack_num + 1
+        # try:
+        #     sender_socket.settimeout(TIMEOUT_INTERVAL)
+        #     ack, _ = sender_socket.recvfrom(BUFFER_SIZE)
+        #     if ":" in ack.decode():
+        #         ack_num = int(ack.decode().split(":")[1])
+        #         print()
+        #         print(f"Sender: Received ACK: {ack_num}")
+        #         print()
+        #         acknowledged.add(ack_num)
+        #         window_base = ack_num + 1
 
-                # Congestion control - AIMD
-                if cwnd < ssthresh:
-                    cwnd *= 2  # Exponential growth during slow start
-                else:
-                    cwnd += 1  # Linear growth during congestion avoidance
+        #         # Congestion control - AIMD
+        #         if cwnd < ssthresh:
+        #             cwnd *= 2  # Exponential growth during slow start
+        #         else:
+        #             cwnd += 1  # Linear growth during congestion avoidance
 
-        except socket.timeout:
-            print()
-            print("Sender: Timeout occurred, retransmitting...")
-            print()
-            ssthresh = max(cwnd // 2, 1)
-            cwnd = 1  # Reset to slow start
-            # for i in range(window_base, min(window_base + cwnd, len(packets))):
-            #     if i not in acknowledged:
-            #         packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
-            #         sender_socket.sendto(packet, ("localhost", 12345))
-            #         print(f"Sender: Retransmitted packet: {i}")
+        # except socket.timeout:
+        #     print()
+        #     print("Sender: Timeout occurred, retransmitting...")
+        #     print()
+        #     ssthresh = max(cwnd // 2, 1)
+        #     cwnd = 1  # Reset to slow start
+        #     # for i in range(window_base, min(window_base + cwnd, len(packets))):
+        #     #     if i not in acknowledged:
+        #     #         packet = f"{i}:{packets[i].decode(errors='ignore')}".encode()
+        #     #         sender_socket.sendto(packet, ("localhost", 12345))
+        #     #         print(f"Sender: Retransmitted packet: {i}")
+        start_time = time.time()
+        received_acks = set()
+        print()
+        while time.time() - start_time < 3 and len(received_acks) < num_sent_packets:
+            try:
+                sender_socket.settimeout(TIMEOUT_INTERVAL)
+                ack = None
+                ack, _ = sender_socket.recvfrom(BUFFER_SIZE)
+                if ":" in ack.decode():
+                    ack_num = int(ack.decode().split(":")[1])
+                    print(f"Sender: Received ACK: {ack_num}")
+                    received_acks.add(ack_num)
+            except socket.timeout:
+                print("Sender: Timeout occurred, retransmitting...")
+                ssthresh = max(cwnd // 2, 1)
+                cwnd = 1
+                break
+        print()
+        # Process all received ACKs
+        received_acks = sorted(received_acks)
+        for ack_num in received_acks:
+            acknowledged.add(ack_num)
+            window_base = ack_num + 1
+
+        # Update congestion control parameters
+        if cwnd < ssthresh:
+            cwnd *= 2  # Exponential growth during slow start
+        else:
+            cwnd += 1  # Linear growth during congestion avoidance
+
+        # Check if there are still unacknowledged packets
+        if window_base >= len(packets):
+            print("All packets acknowledged.")
+            break  # Exit the loop when all packets are acknowledged
 
 def start_send():
     sender_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
