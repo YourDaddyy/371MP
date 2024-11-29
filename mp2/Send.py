@@ -6,7 +6,7 @@ import time
 # Constants
 BUFFER_SIZE = 1024
 TIMEOUT_INTERVAL = 2  # Timeout interval in seconds
-LOSS_PROBABILITY = 0.5  # Probability of packet loss
+LOSS_PROBABILITY = 0.35  # Probability of packet loss
 RECEIVER_ADDRESS = ("localhost", 12345)
 
 
@@ -24,7 +24,7 @@ def rdt_send(data, sender_socket):
     global next_sequence_number, cwnd, ssthresh
 
     # Split data into packets
-    packets = [data[i:i + BUFFER_SIZE] for i in range(0, len(data), BUFFER_SIZE)]
+    packets = [data[i:i + 128] for i in range(0, len(data), 128)]
     window_base = 0
 
     while window_base < len(packets):
@@ -56,7 +56,9 @@ def rdt_send(data, sender_socket):
             ack, _ = sender_socket.recvfrom(BUFFER_SIZE)
             if ":" in ack.decode():
                 ack_num = int(ack.decode().split(":")[1])
+                print()
                 print(f"Sender: Received ACK: {ack_num}")
+                print()
                 acknowledged.add(ack_num)
                 window_base = ack_num + 1
 
@@ -67,7 +69,9 @@ def rdt_send(data, sender_socket):
                     cwnd += 1  # Linear growth during congestion avoidance
 
         except socket.timeout:
+            print()
             print("Sender: Timeout occurred, retransmitting...")
+            print()
             ssthresh = max(cwnd // 2, 1)
             cwnd = 1  # Reset to slow start
             # for i in range(window_base, min(window_base + cwnd, len(packets))):
@@ -86,7 +90,7 @@ def start_send():
         print("Sender: Connection established. Send ACK")
 
 
-    rdt_send(b"Hello, this is a test message for the reliable transfer protocol.", sender_socket)
+    rdt_send(b"Using Convolutional Neural Networks for sonar data detection provides a robust solution for real-time analysis. As suggested in, such models as YOLO, Faster R- CNN , and SSD designed for rapid object detection, align well with the demands of sonar applications, where swift and accurate identification of objects is critical. This models inherent capability to handle various data types ensures efficient processing of sonar signals and reliable detection results once adapted. We adopt YOLOv8 as our base model for on-premise in- ference, with our converted 3 channels as input. As shown in Figure 8, YOLOv8 includes features from previous ver- sions, such as Multi-Scale Predictions (v3), PANet (v4), and the Efficient Layer Aggregation Network (ELAN) (v7), while improving ease and uniformity of on-site commissioning. Its modularity simplifies system construction. YOLOv8s archi- tecture is similar to earlier versions, with the addition of the c2f block for better feature extraction and aggregation. As an anchor-free model, YOLOv8 reduces candidate bounding boxes, effectively lowering false positives in high-noise sonar environments. Additionally, the lightweight architecture of YOLOv8 en- sures low latency and rapid inference, making it ideal for deployment on edge devices like the Jetson Orin Nano [ 23]. These devices are optimized for edge AI applications, offering the necessary computational power while maintaining low energy consumption and thermal efficiency. All these make YOLOv8 a robust solution for real-time sonar data analysis, providing immediate and accurate insights that are critical for various applications.FFN Current Frame Ref Frame 1 Ref Frame 2 x N x N x N Query Decoder Current Frame Current Frame Key Sampling Points Encoder Inference Flow Query Self-attention Multi-head Attention Memory Memory Self-attention", sender_socket)
 
     print("Sender: Tearing down connection...")
     sender_socket.sendto(b"FIN", RECEIVER_ADDRESS)
