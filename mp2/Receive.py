@@ -26,16 +26,11 @@ def rdt_receive():
             sequence_number = int(sequence_number)
 
             if sequence_number == expected_sequence_number:
-                # Add data to buffer if the receiver window allows
-                if len(receiver_buffer) < receiver_window:
-                    print(f"Receiver: Received packet: {sequence_number}")
-                    receiver_buffer.append(data)
-                    receiver_socket.sendto(f"ACK:{sequence_number}".encode(), address)
-                    expected_sequence_number += 1
-                else:
-                    # If the window is full, we cannot accept more packets yet
-                    print(f"Receiver: Window full, waiting to process packet {sequence_number}...")
-                    continue
+                print(f"Receiver: Received packet: {sequence_number}")
+                receiver_buffer.append(data)
+                receiver_socket.sendto(f"ACK:{sequence_number}".encode(), address)
+                expected_sequence_number += 1
+
             else:
                 # Send ACK for the last correctly received packet
                 ack_to_send = expected_sequence_number - 1
